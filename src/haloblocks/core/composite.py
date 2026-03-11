@@ -1,5 +1,9 @@
+import torch.nn as nn
 from typing import List
+from haloblocks.core.block import Block
+from haloblocks.core.registry import BlockRegistry
 
+@BlockRegistry.register("composite_block")
 class CompositeBlock(Block):
     """A block that sequentially executes its children."""
 

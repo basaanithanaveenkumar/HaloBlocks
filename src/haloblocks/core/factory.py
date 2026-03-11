@@ -1,3 +1,6 @@
+from haloblocks.core.block import Block
+from haloblocks.core.registry import BlockRegistry
+
 class BlockFactory:
     @staticmethod
     def create(config: dict) -> Block:
