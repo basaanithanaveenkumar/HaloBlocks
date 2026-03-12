@@ -1,15 +1,25 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'          # runs when you push a tag like v0.1.0, v1.2.3, etc.
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write   # <-- critical for trusted publishing
+      id-token: write   # required for trusted publishing
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Install uv
         uses: astral-sh/setup-uv@v3
+
       - name: Build
         run: uv build
-      - name: Publish
-        run: uv publish   # no env vars for username/password
+
+      - name: Publish to PyPI
+        run: uv publish   # uses OIDC token automatically
