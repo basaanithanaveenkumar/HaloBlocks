@@ -1,28 +1,21 @@
 name: Publish to PyPI
 
 env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # <-- correct placement
 
 on:
   push:
     tags:
-      - 'v*'          # runs when you push a tag like v0.1.0, v1.2.3, etc.
+      - 'v*'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write   # required for trusted publishing
+      id-token: write
       contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-
-      - name: Build
-        run: uv build
-
-      - name: Publish to PyPI
-        run: uv publish   # uses OIDC token automatically
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv build
+      - run: uv publish
