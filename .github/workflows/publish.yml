@@ -8,6 +8,7 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: release
     # Correct placement for job-level env vars
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
