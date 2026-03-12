@@ -8,25 +8,24 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # Added environment to match your PyPI project settings
-    environment: release 
+    # Correct placement for job-level env vars
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+    
     permissions:
       id-token: write
       contents: read
-    
-    env:
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true
 
     steps:
-      # Updated versions to silence deprecation warnings
-      - uses: actions/checkout@v4 
-      - uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-
-      - name: Build package
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      
+      - name: Build
         run: uv build
-
-      - name: Publish to PyPI
-        # If not using trusted publishing, you'd need: UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        
+      - name: Publish
+        # If you are NOT using PyPI Trusted Publishing (OIDC), 
+        # you must provide a token here:
+        # env:
+        #   UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
         run: uv publish
