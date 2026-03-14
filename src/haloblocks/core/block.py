@@ -2,7 +2,13 @@ from abc import ABC, abstractmethod
 import torch.nn as nn
 
 class Block(ABC, nn.Module):
-    """Base class for all composable model components."""
+    """
+    Base class for all composable neural network components in HaloBlocks.
+
+    Every model component (e.g., Attention, MoE, Transformer Layer) should
+    inherit from this class to ensure compatibility with the BlockFactory
+    and BlockRegistry.
+    """
 
     def __init__(self):
         super().__init__()
@@ -10,11 +16,21 @@ class Block(ABC, nn.Module):
 
     @abstractmethod
     def forward(self, x, **kwargs):
-        """Forward pass; kwargs allow passing masks, cache, etc."""
+        """
+        Defines the computation performed at every call.
+
+        Args:
+            x (torch.Tensor): The main input tensor.
+            **kwargs: Additional arguments such as masks, key-value caches, etc.
+
+        Returns:
+            torch.Tensor or tuple: The transformed tensor(s).
+        """
         pass
 
     @property
     def name(self):
+        """Returns the name of the block."""
         return self._name
 
     def extra_repr(self):

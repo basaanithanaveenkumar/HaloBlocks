@@ -7,6 +7,17 @@ from haloblocks.core.registry import BlockRegistry
 
 @BlockRegistry.register("self_attention_basic")
 class SelfAttn(Block):
+    """
+    A basic Single-Head Self-Attention block.
+
+    This block implements the standard scaled dot-product self-attention mechanism
+    where queries, keys, and values are projected from the same input.
+
+    Args:
+        emb_dim (int): Dimensionality of the input embeddings.
+        return_attn_weights (bool): If True, returns both the output and the
+            attention weights. Defaults to False.
+    """
     def __init__(self, emb_dim, return_attn_weights=False):
         super().__init__()
         self.emb_dim = emb_dim
@@ -43,6 +54,19 @@ class SelfAttn(Block):
 
 @BlockRegistry.register("head_attention")
 class HeadAttn(Block):
+    """
+    A single attention head often used as a component of Multi-Head Attention.
+
+    This block projects the input to a smaller `head_size` and computes
+    self-attention within that subspace.
+
+    Args:
+        emb_dim (int): Dimensionality of the input embeddings.
+        head_size (int): Dimensionality of the head (typically emb_dim // num_heads).
+        drop_fact (float): Dropout probability. Defaults to 0.0.
+        causal_mask (bool): If True, applies a causal mask for auto-regressive decoding.
+        return_attn_weights (bool): If True, returns both the output and the attention weights.
+    """
     def __init__(self, emb_dim=256, head_size=16, drop_fact=0.0, causal_mask=False, return_attn_weights=False):
         super().__init__()
         self.emb_dim = emb_dim
@@ -80,6 +104,20 @@ class HeadAttn(Block):
 
 @BlockRegistry.register("multi_head_attn")
 class MultiHeadAttn(Block):
+    """
+    Multi-Head Attention (MHA) block.
+
+    MHA allows the model to jointly attend to information from different
+    representation subspaces at different positions. This implementation
+    uses a collection of `HeadAttn` blocks.
+
+    Args:
+        emb_dim (int): Dimensionality of the input embeddings.
+        num_heads (int): Number of attention heads.
+        drop_fact (float): Dropout probability. Defaults to 0.0.
+        causal_mask (bool): If True, applies causal masking to all heads.
+        return_attn_weights (bool): If True, returns both the output and the attention weights.
+    """
     def __init__(self, emb_dim=256, num_heads=8, drop_fact=0.0, causal_mask=False, return_attn_weights=False):
         super().__init__()
         self.emb_dim = emb_dim
