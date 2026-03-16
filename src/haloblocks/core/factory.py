@@ -1,3 +1,4 @@
+from typing import Union
 from haloblocks.core.block import Block
 from haloblocks.core.registry import BlockRegistry
 
@@ -9,7 +10,7 @@ class BlockFactory:
     by identifying "blocks" keys in the configuration.
     """
     @staticmethod
-    def create(config_or_type: str | dict, **kwargs) -> Block:
+    def create(config_or_type: Union[str, dict], **kwargs) -> Block:
         """
         Instantiates a Block based on the provided configuration.
 

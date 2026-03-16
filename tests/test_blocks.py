@@ -16,6 +16,10 @@ import haloblocks.blocks.transformer.transformer_block
 import haloblocks.blocks.transformer.decoder
 import haloblocks.blocks.vla.flow_decoder
 import haloblocks.blocks.attention.scaledotprod
+import haloblocks.blocks.attention.trinity_attention
+import haloblocks.blocks.attention.cross_attention
+import haloblocks.blocks.attention.mqa
+import haloblocks.blocks.attention.gqa
 
 class TestHaloBlocks(unittest.TestCase):
     def setUp(self):
@@ -121,6 +125,74 @@ class TestHaloBlocks(unittest.TestCase):
         v = torch.randn(2, 8, 10, 32)
         output = block(q, k, v)
         self.assertEqual(output.shape, (2, 8, 10, 32))
+
+    def test_trinity_attention(self):
+        config = {'type': 'trinity_attention', 'emb_dim': self.emb_dim, 'num_heads': 4}
+        block = BlockFactory.create(config)
+        x = torch.randn(self.batch_size, self.seq_len, self.emb_dim)
+        output = block(x)
+        self.assertEqual(output.shape, (self.batch_size, self.seq_len, self.emb_dim))
+
+    def test_trinity_cross_attention(self):
+        config = {'type': 'trinity_cross_attention', 'emb_dim': self.emb_dim, 'num_heads': 4}
+        block = BlockFactory.create(config)
+        seq_len_kv = 15
+        x = torch.randn(self.batch_size, self.seq_len, self.emb_dim)
+        context = torch.randn(self.batch_size, seq_len_kv, self.emb_dim)
+        output = block(x, context)
+        self.assertEqual(output.shape, (self.batch_size, self.seq_len, self.emb_dim))
+
+    def test_cross_attn_basic(self):
+        config = {'type': 'cross_attention_basic', 'emb_dim': self.emb_dim}
+        block = BlockFactory.create(config)
+        seq_len_kv = 15
+        query_inputs = torch.randn(self.batch_size, self.seq_len, self.emb_dim)
+        context_inputs = torch.randn(self.batch_size, seq_len_kv, self.emb_dim)
+        output = block(query_inputs, context_inputs)
+        self.assertEqual(output.shape, (self.batch_size, self.seq_len, self.emb_dim))
+
+    def test_multi_head_cross_attn(self):
+        config = {'type': 'multi_head_cross_attn', 'emb_dim': self.emb_dim, 'num_heads': 8}
+        block = BlockFactory.create(config)
+        seq_len_kv = 15
+        query_inputs = torch.randn(self.batch_size, self.seq_len, self.emb_dim)
+        context_inputs = torch.randn(self.batch_size, seq_len_kv, self.emb_dim)
+        output = block(query_inputs, context_inputs)
+        self.assertEqual(output.shape, (self.batch_size, self.seq_len, self.emb_dim))
+
+    def test_multi_query_attention(self):
+        config = {'type': 'multi_query_attention', 'emb_dim': self.emb_dim, 'num_heads': 8}
+        block = BlockFactory.create(config)
+        query = torch.randn(self.batch_size, self.seq_len, self.emb_dim)
+        
+        # Test default (self-attention)
+        output1 = block(query)
+        self.assertEqual(output1.shape, (self.batch_size, self.seq_len, self.emb_dim))
+        
+        # Test cross-attention style
+        key = torch.randn(self.batch_size, 15, self.emb_dim)
+        value = torch.randn(self.batch_size, 15, self.emb_dim)
+        output2 = block(query, key=key, value=value)
+        self.assertEqual(output2.shape, (self.batch_size, self.seq_len, self.emb_dim))
+
+    def test_grouped_query_attention(self):
+        config = {
+            'type': 'grouped_query_attention', 
+            'emb_dim': self.emb_dim, 
+            'num_heads': 8,
+            'num_kv_heads': 2
+        }
+        block = BlockFactory.create(config)
+        x = torch.randn(self.batch_size, self.seq_len, self.emb_dim)
+        
+        # Self-attention mode
+        output1 = block(x)
+        self.assertEqual(output1.shape, (self.batch_size, self.seq_len, self.emb_dim))
+        
+        # Cross-attention mode
+        context = torch.randn(self.batch_size, 15, self.emb_dim)
+        output2 = block(x, context=context)
+        self.assertEqual(output2.shape, (self.batch_size, self.seq_len, self.emb_dim))
 
 if __name__ == "__main__":
     unittest.main()

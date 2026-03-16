@@ -5,6 +5,17 @@ from haloblocks.core.block import Block
 from haloblocks.core.registry import BlockRegistry
 
 class Expert(Block):
+    """
+    A single expert layer within a Mixture-of-Experts (MoE) block.
+    
+    This implementation uses a SwiGLU activation function: 
+    (Swish(xW1) * xW3) * W2.
+
+    Args:
+        emb_dim (int): Input and output dimensionality.
+        hid_dim (int): Intermediate dimensionality for the SwiGLU layer.
+        dropout (float): Dropout probability. Defaults to 0.0.
+    """
     def __init__(self, emb_dim, hid_dim, dropout=0.0):
         super().__init__()
         self.w1 = nn.Linear(emb_dim, hid_dim, bias=False)
@@ -17,6 +28,14 @@ class Expert(Block):
         return self.dropout(self.w2(F.silu(self.w1(x)) * self.w3(x)))
 
 class NoiseBestKRouter(Block):
+    """
+    A router that selects the best K experts with added Gaussian noise for load balancing.
+
+    Args:
+        emb_dim (int): Dimensionality of the input embeddings.
+        num_exprts (int): Total number of experts to route between.
+        best_k (int): Number of top experts to select for each token.
+    """
     def __init__(self, emb_dim, num_exprts, best_k):
         super().__init__()
         self.best_k = best_k
@@ -24,6 +43,17 @@ class NoiseBestKRouter(Block):
         self.noise_linear = nn.Linear(emb_dim, num_exprts)
 
     def forward(self, x, **kwargs):
+        """
+        Routes inputs to the best K experts.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch, seq_len, emb_dim).
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]: 
+                - router_output: Softmax probabilities over chosen experts (sparse).
+                - idxs: Indices of the top-k experts.
+        """
         logits = self.bestk_layer(x)
         noise_logits = self.noise_linear(x)
         # add the gaussian noise to logits
@@ -41,6 +71,19 @@ class NoiseBestKRouter(Block):
 
 @BlockRegistry.register("deepseek_moe")
 class DeepseekMoE(Block):
+    """
+    DeepSeek Mixture-of-Experts (MoE) implementation.
+    
+    This architecture combines 'shared experts' (always active) with 'routed experts' 
+    (selected by a router).
+
+    Args:
+        emb_dim (int): Input and output dimensionality.
+        hid_dim (int): Intermediate dimensionality for each expert.
+        num_router_exprts (int): Total number of experts available for routing.
+        best_k (int): Number of routed experts to activate per token.
+        num_shared_exprts (int): Number of shared experts that are always active.
+    """
     def __init__(self, emb_dim, hid_dim, num_router_exprts, best_k, num_shared_exprts):
         super().__init__()
         self.router = NoiseBestKRouter(emb_dim, num_router_exprts, best_k)
@@ -52,6 +95,16 @@ class DeepseekMoE(Block):
         self.best_k = best_k
 
     def forward(self, x, **kwargs):
+        """
+        Computes the MoE forward pass.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch, seq_len, emb_dim).
+            **kwargs: Ignored.
+
+        Returns:
+            torch.Tensor: Aggregated output from shared and routed experts.
+        """
         batch, seq, dim = x.shape
         x_flat = x.view(-1, dim)
         shared_output = 0
