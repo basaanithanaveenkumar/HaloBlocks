@@ -129,7 +129,9 @@ class MultiHeadLatentAttention(Block):
         # q_abs shape: (batch, num_heads, tgt_len, latent_dim)
 
         # ----- attention scores -----
-        scores = torch.matmul(q_abs, k_c.transpose(-2, -1))   # (batch, num_heads, tgt_len, src_len)
+        # Expand k_c to match the head dimension: (batch, 1, src_len, latent_dim)
+        k_c_expanded = k_c.unsqueeze(1)
+        scores = torch.matmul(q_abs, k_c_expanded.transpose(-2, -1))   # (batch, num_heads, tgt_len, src_len)
         scores = scores / (self.head_dim ** 0.5)
 
         if causal_mask is not None:
