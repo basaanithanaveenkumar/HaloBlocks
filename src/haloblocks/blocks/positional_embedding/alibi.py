@@ -1,10 +1,12 @@
-import torch
 import math
+
+import torch
 
 from haloblocks.core.block import Block
 from haloblocks.core.registry import BlockRegistry
 
-@BlockRegistry.register("alibi_positional_bias")
+
+@BlockRegistry.register()
 class AlibiPositionalBias(Block):
     """
     Attention with Linear Biases (ALiBi).
@@ -18,6 +20,7 @@ class AlibiPositionalBias(Block):
         slope_factor (float, optional): Scaling factor for slopes.
             If None, uses default geometric sequence: 2^(-8/n) for each head.
     """
+
     def __init__(self, num_heads, max_len=2048, slope_factor=None):
         super().__init__()
         self.num_heads = num_heads
@@ -36,20 +39,23 @@ class AlibiPositionalBias(Block):
         else:
             # Default: 2^(-8 * (i+1) / num_heads) for i in 0..num_heads-1
             n = self.num_heads
+
             def get_slopes(n):
                 def get_slopes_power_of_2(n):
                     start = 2 ** (-(2 ** -(math.log2(n) - 3)))
                     return [start * (2 ** (-i)) for i in range(n)]
+
                 if math.log2(n).is_integer():
                     return get_slopes_power_of_2(n)
                 else:
                     closest_power_of_2 = 2 ** math.floor(math.log2(n))
                     slopes_a = get_slopes_power_of_2(closest_power_of_2)
                     slopes_b = get_slopes_power_of_2(2 * closest_power_of_2)
-                    slopes = slopes_a + slopes_b[0::2][:n - closest_power_of_2]
+                    slopes = slopes_a + slopes_b[0::2][: n - closest_power_of_2]
                     return slopes
+
             slopes = get_slopes(n)
-        self.register_buffer('slopes', torch.tensor(slopes))
+        self.register_buffer("slopes", torch.tensor(slopes))
 
     def _build_bias_cache(self, max_len):
         """Precompute bias matrix for all possible (tgt, src) lengths up to max_len."""

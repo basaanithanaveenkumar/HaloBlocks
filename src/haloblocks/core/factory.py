@@ -1,6 +1,8 @@
 from typing import Union
+
 from haloblocks.core.block import Block
 from haloblocks.core.registry import BlockRegistry
+
 
 class BlockFactory:
     """
@@ -9,18 +11,20 @@ class BlockFactory:
     The factory supports recursive building of nested blocks (e.g., CompositeBlocks)
     by identifying "blocks" keys in the configuration.
     """
+
     @staticmethod
     def create(config_or_type: Union[str, dict], **kwargs) -> Block:
         """
         Instantiates a Block based on the provided configuration.
 
         Supports two invocation styles:
-        1. Dictionary: create({'type': 'mha', 'dim': 128})
-        2. Keyword: create('mha', dim=128)
+        1. Dictionary: create({'type': 'MultiHeadAttention', 'emb_dim': 128, 'num_heads': 4})
+        2. Keyword: create('MultiHeadAttention', emb_dim=128, num_heads=4)
 
         Args:
             config_or_type (str | dict): Either a configuration dictionary
-                containing "type" or the string name of the block type.
+                containing ``"type"`` (the registry key from ``@BlockRegistry.register``)
+                or that key as a string.
             **kwargs: Parameters passed to the block constructor if config_or_type is a string.
 
         Returns:
@@ -35,7 +39,7 @@ class BlockFactory:
             params = kwargs
 
         block_cls = BlockRegistry.get(block_type)
-        
+
         # Recursively build nested blocks if needed
         if "blocks" in params:
             sub_blocks = []
@@ -47,5 +51,5 @@ class BlockFactory:
                 else:
                     sub_blocks.append(sub)
             params["blocks"] = sub_blocks
-            
+
         return block_cls(**params)

@@ -3,7 +3,8 @@ import torch
 from haloblocks.core.block import Block
 from haloblocks.core.registry import BlockRegistry
 
-@BlockRegistry.register("rotary_positional_embedding")
+
+@BlockRegistry.register()
 class RotaryPositionalEmbedding(Block):
     """
     Rotary Positional Embedding (RoPE).
@@ -16,6 +17,7 @@ class RotaryPositionalEmbedding(Block):
         max_len (int, optional): Maximum sequence length for precomputed frequencies.
         base (float, optional): Base for the geometric progression of frequencies.
     """
+
     def __init__(self, head_dim, max_len=2048, base=10000.0):
         super().__init__()
         self.head_dim = head_dim
@@ -24,7 +26,7 @@ class RotaryPositionalEmbedding(Block):
 
         # Precompute frequency inverses
         inv_freq = 1.0 / (base ** (torch.arange(0, head_dim, 2).float() / head_dim))
-        self.register_buffer('inv_freq', inv_freq)
+        self.register_buffer("inv_freq", inv_freq)
 
         # Precompute sinusoidal cache for positions up to max_len
         self._build_cache(max_len)
@@ -33,12 +35,12 @@ class RotaryPositionalEmbedding(Block):
         # positions: (max_len,)
         positions = torch.arange(max_len, dtype=self.inv_freq.dtype, device=self.inv_freq.device)
         # frequencies: (max_len, head_dim//2)
-        freqs = torch.einsum('i,j->ij', positions, self.inv_freq)  # (max_len, head_dim//2)
+        freqs = torch.einsum("i,j->ij", positions, self.inv_freq)  # (max_len, head_dim//2)
         # emb: (max_len, head_dim)
         emb = torch.cat((freqs, freqs), dim=-1)  # duplicate for even/odd indices
         # cos and sin: (max_len, head_dim)
-        self.register_buffer('cos_cached', emb.cos())
-        self.register_buffer('sin_cached', emb.sin())
+        self.register_buffer("cos_cached", emb.cos())
+        self.register_buffer("sin_cached", emb.sin())
 
     def _rotate_half(self, x):
         """Rotates half the hidden dims of the input."""

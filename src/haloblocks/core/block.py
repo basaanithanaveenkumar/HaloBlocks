@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+
 import torch.nn as nn
+
 
 class Block(ABC, nn.Module):
     """

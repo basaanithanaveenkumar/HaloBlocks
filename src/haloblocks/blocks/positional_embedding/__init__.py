@@ -1,6 +1,3 @@
-from . import sinusoidal
-from . import learned
-from . import rotary
-from . import alibi
+from . import alibi, learned, rotary, sinusoidal
 
 __all__ = ["sinusoidal", "learned", "rotary", "alibi"]

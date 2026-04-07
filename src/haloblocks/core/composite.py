@@ -1,9 +1,12 @@
-import torch.nn as nn
 from typing import List
+
+import torch.nn as nn
+
 from haloblocks.core.block import Block
 from haloblocks.core.registry import BlockRegistry
 
-@BlockRegistry.register("composite_block")
+
+@BlockRegistry.register()
 class CompositeBlock(Block):
     """
     A container block that executes a sequence of sub-blocks.

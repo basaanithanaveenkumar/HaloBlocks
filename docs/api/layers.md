@@ -1,3 +1,0 @@
-# Layers API
-
-::: haloblocks.layers

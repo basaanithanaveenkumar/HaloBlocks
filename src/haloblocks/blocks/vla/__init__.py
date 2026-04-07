@@ -1,3 +1,3 @@
-from haloblocks.blocks.vla.flow_decoder import SinusoidalTimeEmbedding, FlowActionDecoder
+from haloblocks.blocks.vla.flow_decoder import FlowActionDecoder, SinusoidalTimeEmbedding
 
 __all__ = ["SinusoidalTimeEmbedding", "FlowActionDecoder"]
