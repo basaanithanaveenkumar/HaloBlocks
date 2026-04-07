@@ -1,0 +1,40 @@
+# When a PR from branch release/* is merged into main, create tag vX.Y.Z from pyproject.toml
+# and push it. The existing publish.yml workflow runs on tag push v* and publishes to PyPI.
+
+name: Tag release on merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  tag-release:
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout merge commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Read version and create tag
+        run: |
+          set -euo pipefail
+          VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          TAG="v${VERSION}"
+          git fetch --tags origin || true
+          if [ -n "$(git ls-remote origin "refs/tags/${TAG}")" ]; then
+            echo "Tag ${TAG} already exists on origin; skipping."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release ${TAG}"
+          git push origin "$TAG"
+          echo "Pushed ${TAG} — publish workflow should run next."

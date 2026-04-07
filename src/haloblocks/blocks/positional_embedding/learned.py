@@ -4,7 +4,8 @@ import torch.nn as nn
 from haloblocks.core.block import Block
 from haloblocks.core.registry import BlockRegistry
 
-@BlockRegistry.register("learned_positional_embedding")
+
+@BlockRegistry.register()
 class LearnedPositionalEmbedding(Block):
     """
     Learned absolute positional embedding.
@@ -16,6 +17,7 @@ class LearnedPositionalEmbedding(Block):
         max_len (int): Maximum sequence length.
         dropout (float, optional): Dropout applied after adding embeddings.
     """
+
     def __init__(self, emb_dim, max_len, dropout=0.0):
         super().__init__()
         self.emb_dim = emb_dim

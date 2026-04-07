@@ -1,11 +1,13 @@
+import math
+
 import torch
 import torch.nn as nn
-import math
 
 from haloblocks.core.block import Block
 from haloblocks.core.registry import BlockRegistry
 
-@BlockRegistry.register("sinusoidal_positional_embedding")
+
+@BlockRegistry.register()
 class SinusoidalPositionalEmbedding(Block):
     """
     Sinusoidal positional embedding (absolute, fixed).
@@ -18,6 +20,7 @@ class SinusoidalPositionalEmbedding(Block):
         max_len (int, optional): Maximum sequence length. Defaults to 5000.
         dropout (float, optional): Dropout applied after adding embeddings.
     """
+
     def __init__(self, emb_dim, max_len=5000, dropout=0.0):
         super().__init__()
         self.emb_dim = emb_dim
@@ -37,7 +40,7 @@ class SinusoidalPositionalEmbedding(Block):
         pe = pe.unsqueeze(0)  # (1, max_len, emb_dim)
 
         # Register as buffer (not a parameter)
-        self.register_buffer('pe', pe)
+        self.register_buffer("pe", pe)
 
     def forward(self, x, **kwargs):
         """

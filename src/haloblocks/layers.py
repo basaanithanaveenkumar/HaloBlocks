@@ -1,19 +1,12 @@
-from haloblocks.core.registry import BlockRegistry
+"""Backward-compatible alias: ``haloblocks.layers`` is the same module as ``haloblocks.blocks``.
 
-class LayersProxy:
-    """
-    A dynamic proxy that provides access to registered Block classes
-    as if they were attributes of this module.
-    """
-    def __getattr__(self, name):
-        try:
-            return BlockRegistry.get(name)
-        except KeyError:
-            raise AttributeError(f"No block registered with name: {name}")
+Prefer ``from haloblocks import blocks`` and ``blocks.<registry_key>``.
+"""
 
-    def __dir__(self):
-        return list(BlockRegistry._registry.keys())
+from __future__ import annotations
 
-# Export as a singleton-like instance
 import sys
-sys.modules[__name__] = LayersProxy()
+
+import haloblocks.blocks as _blocks
+
+sys.modules[__name__] = sys.modules[_blocks.__name__]

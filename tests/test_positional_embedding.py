@@ -1,23 +1,17 @@
-import torch
-import unittest
-import math
-import sys
 import os
+import sys
+import unittest
+
+import torch
 
 # Add src to sys.path
-sys.path.append(os.path.join(os.getcwd(), 'src'))
+sys.path.append(os.path.join(os.getcwd(), "src"))
 
-from haloblocks.blocks.positional_embedding.sinusoidal import SinusoidalPositionalEmbedding
+from haloblocks.blocks.positional_embedding.alibi import AlibiPositionalBias
 from haloblocks.blocks.positional_embedding.learned import LearnedPositionalEmbedding
 from haloblocks.blocks.positional_embedding.rotary import RotaryPositionalEmbedding
-from haloblocks.blocks.positional_embedding.alibi import AlibiPositionalBias
-
+from haloblocks.blocks.positional_embedding.sinusoidal import SinusoidalPositionalEmbedding
 from haloblocks.core.factory import BlockFactory
-# Ensure modules are imported for registry
-import haloblocks.blocks.positional_embedding.sinusoidal
-import haloblocks.blocks.positional_embedding.learned
-import haloblocks.blocks.positional_embedding.rotary
-import haloblocks.blocks.positional_embedding.alibi
 
 
 class TestSinusoidalPositionalEmbedding(unittest.TestCase):
@@ -48,7 +42,7 @@ class TestSinusoidalPositionalEmbedding(unittest.TestCase):
         self.assertTrue(torch.allclose(out1, out2))
 
     def test_factory_create(self):
-        config = {'type': 'sinusoidal_positional_embedding', 'emb_dim': self.emb_dim}
+        config = {"type": "SinusoidalPositionalEmbedding", "emb_dim": self.emb_dim}
         block = BlockFactory.create(config)
         x = torch.randn(self.batch_size, self.seq_len, self.emb_dim)
         output = block(x)
@@ -83,9 +77,9 @@ class TestLearnedPositionalEmbedding(unittest.TestCase):
 
     def test_factory_create(self):
         config = {
-            'type': 'learned_positional_embedding',
-            'emb_dim': self.emb_dim,
-            'max_len': self.max_len,
+            "type": "LearnedPositionalEmbedding",
+            "emb_dim": self.emb_dim,
+            "max_len": self.max_len,
         }
         block = BlockFactory.create(config)
         x = torch.randn(self.batch_size, self.seq_len, self.emb_dim)
@@ -131,7 +125,7 @@ class TestRotaryPositionalEmbedding(unittest.TestCase):
         self.assertEqual(k_rot.shape, k.shape)
 
     def test_factory_create(self):
-        config = {'type': 'rotary_positional_embedding', 'head_dim': self.head_dim}
+        config = {"type": "RotaryPositionalEmbedding", "head_dim": self.head_dim}
         block = BlockFactory.create(config)
         q = torch.randn(self.batch_size, self.num_heads, self.seq_len, self.head_dim)
         k = torch.randn(self.batch_size, self.num_heads, self.seq_len, self.head_dim)
@@ -169,7 +163,7 @@ class TestAlibiPositionalBias(unittest.TestCase):
         self.assertTrue(torch.allclose(diagonal, torch.zeros_like(diagonal)))
 
     def test_factory_create(self):
-        config = {'type': 'alibi_positional_bias', 'num_heads': self.num_heads}
+        config = {"type": "AlibiPositionalBias", "num_heads": self.num_heads}
         block = BlockFactory.create(config)
         bias = block(tgt_len=self.tgt_len, src_len=self.src_len)
         self.assertEqual(bias.shape, (self.num_heads, self.tgt_len, self.src_len))

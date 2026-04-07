@@ -5,6 +5,7 @@ class BlockRegistry:
     This registry enables configuration-driven model building by allowing
     the BlockFactory to look up components by their registered names.
     """
+
     _registry = {}
 
     @classmethod
@@ -16,10 +17,12 @@ class BlockRegistry:
             name (str, optional): The name to register the block under.
                 Defaults to the class name if not provided.
         """
+
         def decorator(block_cls):
             key = name or block_cls.__name__
             cls._registry[key] = block_cls
             return block_cls
+
         return decorator
 
     @classmethod

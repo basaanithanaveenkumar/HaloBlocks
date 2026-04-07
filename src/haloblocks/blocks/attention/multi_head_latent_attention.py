@@ -4,9 +4,12 @@ import torch.nn.functional as F
 
 from haloblocks.core.block import Block
 from haloblocks.core.registry import BlockRegistry
-from .utils import RMSNorm
 
-@BlockRegistry.register("multi_head_latent_attention")
+from ..norm import RMSNorm
+from .masking import check_attention_mask_broadcasts
+
+
+@BlockRegistry.register()
 class MultiHeadLatentAttention(Block):
     """
     Multi-Head Latent Attention with absorption trick.
@@ -32,6 +35,7 @@ class MultiHeadLatentAttention(Block):
         tie_kv_down (bool): If True, shares the down‑projection for keys and values.
             (Not implemented – kept for future extension.)
     """
+
     def __init__(
         self,
         emb_dim=256,
@@ -40,7 +44,7 @@ class MultiHeadLatentAttention(Block):
         dropout=0.0,
         use_q_norm=False,
         use_k_norm=False,
-        tie_kv_down=False,          # reserved for future use
+        tie_kv_down=False,  # reserved for future use
     ):
         super().__init__()
         if emb_dim % num_heads != 0:
@@ -82,39 +86,36 @@ class MultiHeadLatentAttention(Block):
         # Linear layers are initialised with default PyTorch init (Kaiming uniform),
         # which is fine for typical transformers.
 
-    def forward(self, query, key=None, value=None, causal_mask=None, **kwargs):
+    def forward(self, x, context=None, value_context=None, *, mask=None, **kwargs):
         """
-        Compute multi‑head latent attention with absorption.
+        Q from ``x``; K from ``context``; V from ``value_context``.
+        All default to ``x`` for self-attention. KV pairs are compressed into a latent space.
 
         Args:
-            query (torch.Tensor): Query tensor of shape (batch, tgt_len, emb_dim).
-            key (torch.Tensor, optional): Key tensor. Defaults to query.
-            value (torch.Tensor, optional): Value tensor. Defaults to key.
-            causal_mask (torch.Tensor, optional): Boolean mask of shape
-                (tgt_len, src_len) or broadcastable to
-                (batch, 1, tgt_len, src_len). Positions with `0` are masked.
+            x (torch.Tensor): Query tensor of shape (batch, tgt_len, emb_dim).
+            context (torch.Tensor, optional): Key source. Defaults to x.
+            value_context (torch.Tensor, optional): Value source. Defaults to context.
+            mask (torch.Tensor, optional): Boolean mask broadcastable to scores
+                ``(batch, num_heads, tgt_len, src_len)``. Positions with ``0`` are masked.
             **kwargs: Ignored.
 
         Returns:
             torch.Tensor: Output tensor of shape (batch, tgt_len, emb_dim).
         """
-        if key is None:
-            key = query
-        if value is None:
-            value = key
+        if context is None:
+            context = x
+        if value_context is None:
+            value_context = context
 
-        batch_size = query.size(0)
-        tgt_len = query.size(1)
-        src_len = key.size(1)
+        batch_size = x.size(0)
+        tgt_len = x.size(1)
 
-        # ----- compress keys and values -----
-        k_c = self.w_k_down(key)          # (batch, src_len, latent_dim)
-        v_c = self.w_v_down(value)        # (batch, src_len, latent_dim)
+        k_c = self.w_k_down(context)  # (batch, src_len, latent_dim)
+        v_c = self.w_v_down(value_context)  # (batch, src_len, latent_dim)
 
-        # ----- query projection and head split -----
-        q = self.w_q(query)                # (batch, tgt_len, emb_dim)
+        q = self.w_q(x)  # (batch, tgt_len, emb_dim)
         q = q.view(batch_size, tgt_len, self.num_heads, self.head_dim)
-        q = q.transpose(1, 2)              # (batch, num_heads, tgt_len, head_dim)
+        q = q.transpose(1, 2)  # (batch, num_heads, tgt_len, head_dim)
 
         if self.q_norm is not None:
             q = self.q_norm(q)
@@ -125,18 +126,18 @@ class MultiHeadLatentAttention(Block):
 
         # ----- absorption trick: project queries into latent key space -----
         # q_abs = einsum('b h t d, h d l -> b h t l', q, w_k_up)
-        q_abs = torch.einsum('b h t d, h d l -> b h t l', q, self.w_k_up)
+        q_abs = torch.einsum("b h t d, h d l -> b h t l", q, self.w_k_up)
         # q_abs shape: (batch, num_heads, tgt_len, latent_dim)
 
         # ----- attention scores -----
         # Expand k_c to match the head dimension: (batch, 1, src_len, latent_dim)
         k_c_expanded = k_c.unsqueeze(1)
-        scores = torch.matmul(q_abs, k_c_expanded.transpose(-2, -1))   # (batch, num_heads, tgt_len, src_len)
-        scores = scores / (self.head_dim ** 0.5)
+        scores = torch.matmul(q_abs, k_c_expanded.transpose(-2, -1))  # (batch, num_heads, tgt_len, src_len)
+        scores = scores / (self.head_dim**0.5)
 
-        if causal_mask is not None:
-            # Broadcast mask to (batch, 1, tgt_len, src_len) if needed
-            scores = scores.masked_fill(causal_mask == 0, float('-inf'))
+        if mask is not None:
+            check_attention_mask_broadcasts(scores, mask, name="mask")
+            scores = scores.masked_fill(mask == 0, float("-inf"))
 
         attn_weights = F.softmax(scores, dim=-1)
         attn_weights = self.dropout_layer(attn_weights)
@@ -144,11 +145,11 @@ class MultiHeadLatentAttention(Block):
         # ----- weighted sum of compressed values -----
         # v_c_expanded: (batch, 1, src_len, latent_dim) – broadcast over heads
         v_c_expanded = v_c.unsqueeze(1)
-        context_latent = torch.matmul(attn_weights, v_c_expanded)   # (batch, num_heads, tgt_len, latent_dim)
+        context_latent = torch.matmul(attn_weights, v_c_expanded)  # (batch, num_heads, tgt_len, latent_dim)
 
         # ----- up‑project values back to head dimension -----
         # context = einsum('b h t l, h d l -> b h t d', context_latent, w_v_up)
-        context = torch.einsum('b h t l, h d l -> b h t d', context_latent, self.w_v_up)
+        context = torch.einsum("b h t l, h d l -> b h t d", context_latent, self.w_v_up)
         # context shape: (batch, num_heads, tgt_len, head_dim)
 
         # ----- merge heads and final output projection -----
