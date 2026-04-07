@@ -1,5 +1,9 @@
-# When a PR from branch release/* is merged into main, create tag vX.Y.Z from pyproject.toml
-# and push it. The existing publish.yml workflow runs on tag push v* and publishes to PyPI.
+# When a PR from branch release/* is merged into main:
+#   1. Create + push tag vX.Y.Z
+#   2. Build and publish to PyPI (trusted publishing / OIDC)
+#
+# NOTE: Tags created by GITHUB_TOKEN do NOT trigger other workflows,
+# so the publish step lives here instead of in a separate publish.yml.
 
 name: Tag release on merge
 
@@ -16,6 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
 
     steps:
       - name: Checkout merge commit
@@ -24,17 +29,35 @@ jobs:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
 
       - name: Read version and create tag
+        id: tag
         run: |
           set -euo pipefail
           VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
           TAG="v${VERSION}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
           git fetch --tags origin || true
           if [ -n "$(git ls-remote origin "refs/tags/${TAG}")" ]; then
             echo "Tag ${TAG} already exists on origin; skipping."
+            echo "created=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$TAG" -m "Release ${TAG}"
           git push origin "$TAG"
-          echo "Pushed ${TAG} — publish workflow should run next."
+          echo "created=true" >> "$GITHUB_OUTPUT"
+          echo "Pushed ${TAG}."
+
+      - name: Set up uv
+        if: steps.tag.outputs.created == 'true'
+        uses: astral-sh/setup-uv@v3
+
+      - name: Build package
+        if: steps.tag.outputs.created == 'true'
+        run: uv build
+
+      - name: Publish to PyPI
+        if: steps.tag.outputs.created == 'true'
+        run: uv publish
