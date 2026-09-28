@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HaloBlocks</title>
+<meta name="description" content="37 registered PyTorch blocks (attention zoo, RoPE/ALiBi, DeepSeek MoE, builder, flow decoder) created by class, by name or by config.">
+<meta property="og:title" content="HaloBlocks: Composable Attention, MoE and Transformer Blocks for PyTorch">
+<meta property="og:description" content="37 registered PyTorch blocks (attention zoo, RoPE/ALiBi, DeepSeek MoE, builder, flow decoder) created by class, by name or by config.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fbfaf7;--fg:#1d1d1f;--muted:#5b5b63;--card:#ffffff;--line:#e4e2dc;--accent:#2f5bd3;--accent-soft:#e8eefc;--code:#f3f2ee;--chip:#efeee9}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111214;--fg:#ececee;--muted:#a0a0aa;--card:#1a1b1f;--line:#2c2d33;--accent:#8aa8ff;--accent-soft:#1e2640;--code:#1f2025;--chip:#24252b}}
+:root[data-theme="dark"]{--bg:#111214;--fg:#ececee;--muted:#a0a0aa;--card:#1a1b1f;--line:#2c2d33;--accent:#8aa8ff;--accent-soft:#1e2640;--code:#1f2025;--chip:#24252b}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:17px/1.65 "Source Serif 4",Georgia,serif}
+.wrap{max-width:920px;margin:0 auto;padding:0 16px}
+header.hero{padding:64px 0 28px;text-align:center}
+.kicker{font:600 13px/1 Inter,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5.4vw,48px)/1.15 Inter,system-ui,sans-serif;margin:14px 0 10px;letter-spacing:-.02em}
+.subtitle{font-size:clamp(17px,2.4vw,21px);color:var(--muted);max-width:720px;margin:0 auto}
+.authors{margin:20px 0 4px;font:500 16px Inter,system-ui,sans-serif}
+.affil{color:var(--muted);font:14px Inter,system-ui,sans-serif}
+.buttons{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:26px 0 8px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:var(--fg);color:var(--bg);text-decoration:none;font:600 14px Inter,system-ui,sans-serif}
+.btn.alt{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn:hover{opacity:.88}
+section{padding:26px 0;border-top:1px solid var(--line)}
+h2{font:700 24px/1.3 Inter,system-ui,sans-serif;margin:0 0 14px;letter-spacing:-.01em}
+h3{font:650 17px/1.35 Inter,system-ui,sans-serif;margin:0 0 6px}
+p{margin:0 0 12px}
+.tldr{background:var(--accent-soft);border-radius:14px;padding:18px 20px;font-size:18px}
+.tldr b{font-family:Inter,system-ui,sans-serif}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+.card p{font-size:15.5px;color:var(--muted);margin:0}
+figure{margin:0 0 18px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;overflow-x:auto}
+figcaption{font:14px/1.5 Inter,system-ui,sans-serif;color:var(--muted);margin-top:10px}
+.mermaid{display:flex;justify-content:center;min-width:0}
+.mermaid svg{max-width:100%;height:auto}
+pre{background:var(--code);border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow-x:auto;font:13.5px/1.55 "JetBrains Mono",ui-monospace,monospace;margin:0 0 12px}
+code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.9em}
+table{width:100%;border-collapse:collapse;font:15px/1.5 Inter,system-ui,sans-serif}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600}
+td code{background:var(--chip);padding:1px 6px;border-radius:6px}
+.tablewrap{overflow-x:auto}
+.note{font:14px/1.55 Inter,system-ui,sans-serif;color:var(--muted)}
+footer{padding:32px 0 48px;color:var(--muted);font:14px Inter,system-ui,sans-serif;text-align:center;border-top:1px solid var(--line)}
+a{color:var(--accent)}
+.theme{position:fixed;top:12px;right:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:6px 12px;font:13px Inter,system-ui,sans-serif;cursor:pointer}
+</style>
+</head>
+<body>
+<button class="theme" id="theme" aria-label="Toggle dark mode">Theme</button>
+<div class="wrap">
+<header class="hero">
+  <div class="kicker">Library · PyTorch · pip install haloblocks</div>
+  <h1>HaloBlocks: Composable Attention, MoE and Transformer Blocks for PyTorch</h1>
+  <p class="subtitle">Every layer is a <code>Block</code> registered under its class name. Create it directly, by name, or from a config dict, then snap layers together with a builder whose norm placement is declarative.</p>
+  <div class="authors">B A NaveenKumar</div>
+  <div class="affil">Independent research · 2026</div>
+  <div class="buttons"><a class="btn" href="paper.pdf">Paper (PDF)</a><a class="btn alt" href="https://github.com/basaanithanaveenkumar/HaloBlocks">Code</a><a class="btn alt" href="https://pypi.org/project/haloblocks/">PyPI</a><a class="btn alt" href="https://github.com/basaanithanaveenkumar/HaloBlocks/tree/main/docs">Docs</a><a class="btn alt" href="https://github.com/basaanithanaveenkumar/HaloBlocks/blob/main/docs/blog/2026-09-28-twenty-four-attentions.md">Blog</a></div>
+</header>
+<section><div class="tldr"><b>TL;DR.</b> 24 attention blocks (MHA, MQA, GQA, cross, gated, sliding-window, linear, MLA, Trinity, …), 4 positional schemes, DeepSeek MoE, a <code>TransformerBlockBuilder</code> with <code>operation_order</code>, and a flow-matching VLA head, all sharing one interface. 71 tests pass.</div></section>
+<section><h2>Abstract</h2><p>Architecture research repeatedly re-implements the same layers with slightly different interfaces that make them hard to swap. HaloBlocks is a small PyTorch library, published on PyPI, in which every component is a Block registered under its class name and can be created directly, by name, or from a nested configuration dictionary.</p><p>It ships 37 registered blocks: attention variants from scaled dot-product to multi-head latent attention with the absorption trick and QK-normalised output-gated Trinity attention; sinusoidal, learned, rotary and ALiBi positions; a configurable MLP; DeepSeek-style mixture-of-experts; transformer blocks and decoders; and a flow-matching action decoder for VLA models. A TransformerBlockBuilder assembles a layer from any registered attention, cross-attention and feed-forward blocks with a declarative operation order.</p></section>
+<section><h2>Highlights</h2><div class="grid"><div class="card"><h3>Three ways, one object</h3><p><code>blocks.X(...)</code>, <code>hb.create('X', ...)</code> and <code>hb.create({'type': 'X', ...})</code> return the same block.</p></div><div class="card"><h3>Attention zoo</h3><p>SDPA, MHA, MQA, GQA, cross, gated, sliding-window (dilated, dynamic), linear (ELU/ReLU/Exp, RoPE), MLA and Trinity.</p></div><div class="card"><h3>Builder</h3><p>Any attention + optional cross-attention + any FFN, with <code>PRE_NORM</code>, <code>POST_NORM</code> or <code>*_CROSS</code> orders and LayerNorm or RMSNorm.</p></div><div class="card"><h3>Config-driven</h3><p>Nested dicts build whole models through <code>CompositeBlock</code>, so they are YAML/JSON-serialisable and easy to sweep.</p></div><div class="card"><h3>MoE and VLA</h3><p>DeepSeek MoE (shared + noisy top-k routed) and a flow-matching <code>FlowActionDecoder</code>.</p></div><div class="card"><h3>Released properly</h3><p>71 tests; merging a release PR tags the version and publishes it to PyPI.</p></div></div></section>
+<section><h2>Architecture</h2><figure><div class="mermaid">flowchart TB
+  A1[&quot;blocks.GroupedQueryAttention(...)&quot;] --&gt; REG[&quot;BlockRegistry&lt;br/&gt;class name → class&quot;]
+  A2[&quot;hb.create(&#x27;GroupedQueryAttention&#x27;, ...)&quot;] --&gt; REG
+  A3[&quot;hb.create({&#x27;type&#x27;: &#x27;GroupedQueryAttention&#x27;, ...})&quot;] --&gt; FAC[&quot;BlockFactory.create&lt;br/&gt;recursive for &#x27;blocks&#x27;&quot;]
+  FAC --&gt; REG
+  REG --&gt; ATT[&quot;attention (24)&quot;]
+  REG --&gt; POS[&quot;positions (4)&quot;]
+  REG --&gt; FF[&quot;MLP · DeepseekMoE&quot;]
+  REG --&gt; TR[&quot;composition (6)&quot;]
+  REG --&gt; VLA[&quot;FlowActionDecoder&quot;]</div><figcaption><b>Figure 1.</b> One registry, three ways in.</figcaption></figure><figure><div class="mermaid">flowchart LR
+  SPEC[&quot;attn / cross_attn / ffn spec&lt;br/&gt;None · &#x27;Name&#x27; · {&#x27;type&#x27;: …} · Block&quot;] --&gt; RES[&quot;resolve → Block&lt;br/&gt;(inject emb_dim if accepted)&quot;]
+  RES --&gt; ORD{&quot;operation_order&quot;}
+  ORD --&gt;|PRE_NORM| P[&quot;(norm, self_attn) → (norm, ffn)&quot;]
+  ORD --&gt;|POST_NORM| Q[&quot;(self_attn, norm) → (ffn, norm)&quot;]
+  ORD --&gt;|PRE_NORM_CROSS| R[&quot;(norm, self_attn) → (norm, cross_attn) → (norm, ffn)&quot;]
+  P &amp; Q &amp; R --&gt; OUT[&quot;residual sublayers&lt;br/&gt;norm: layernorm or rmsnorm&quot;]
+  OUT --&gt; STK[&quot;StackedTransformerBlock × num_layers&quot;]</div><figcaption><b>Figure 2.</b> TransformerBlockBuilder and operation orders.</figcaption></figure><figure><div class="mermaid">flowchart LR
+  X[&quot;x&quot;] --&gt; DKV[&quot;W_DKV: down-project&lt;br/&gt;to latent c (d/4)&quot;]
+  X --&gt; WQ[&quot;W_Q → q per head&quot;]
+  WQ --&gt; ABS[&quot;absorb: q̃ = W_UKᵀ q&quot;]
+  DKV --&gt; S[&quot;scores = q̃ · c&quot;]
+  ABS --&gt; S
+  S --&gt; SM[&quot;softmax&quot;]
+  DKV --&gt; UV[&quot;W_UV: values per head&quot;]
+  SM --&gt; O[&quot;Σ weights · values → W_O&quot;]
+  UV --&gt; O</div><figcaption><b>Figure 3.</b> Multi-head latent attention with absorption.</figcaption></figure><figure><div class="mermaid">flowchart LR
+  X[&quot;x&quot;] --&gt; QKV[&quot;W_Q, W_K, W_V&quot;]
+  QKV --&gt; N[&quot;RMSNorm on q, k per head&lt;br/&gt;(Trinity default)&quot;]
+  N --&gt; A[&quot;softmax(q kᵀ / √d) v&quot;]
+  X --&gt; G[&quot;σ(W_g x + b_g)&quot;]
+  A --&gt; M[&quot;⊙&quot;]
+  G --&gt; M
+  M --&gt; O[&quot;W_O&quot;]</div><figcaption><b>Figure 4.</b> Gated / Trinity attention.</figcaption></figure></section>
+<section><h2>Example compositions (measured)</h2><div class="tablewrap"><table><thead><tr><th>Composition</th><th>Parameters</th><th>Shape</th></tr></thead><tbody><tr><td>GQA (8 heads, 2 KV) + DeepseekMoE (8 routed, 1 shared, top-2), RMSNorm, d = 256</td><td>3.71M</td><td>(2,16,256) → (2,16,256)</td></tr><tr><td>Sinusoidal PE + 4 × Trinity-attention layers, RMSNorm, d = 256</td><td>3.42M</td><td>(2,16,256) → (2,16,256)</td></tr></tbody></table></div></section>
+<section><h2>Known inconsistencies (v0.1.3)</h2><p class='note'>The README describes TrinityAttention as local + global + linear, but the code is QK-normed softmax attention with a sigmoid output gate. The builder's string form <code>ffn='DeepseekMoE'</code> with <code>ffn_kwargs</code> fails (use the dict form). The README's CI badge points to a missing workflow.</p></section>
+<section><h2>Quick start</h2><pre><code>pip install haloblocks        # or: uv add haloblocks</code></pre><pre><code>import torch, haloblocks as hb
+
+layer = hb.create(&quot;TransformerBlockBuilder&quot;, emb_dim=256, norm=&quot;rmsnorm&quot;,
+    attn={&quot;type&quot;: &quot;GroupedQueryAttention&quot;, &quot;num_heads&quot;: 8, &quot;num_kv_heads&quot;: 2},
+    ffn={&quot;type&quot;: &quot;DeepseekMoE&quot;, &quot;emb_dim&quot;: 256, &quot;hid_dim&quot;: 512,
+         &quot;num_router_exprts&quot;: 8, &quot;best_k&quot;: 2, &quot;num_shared_exprts&quot;: 1})
+y = layer(torch.randn(2, 16, 256))       # (2, 16, 256)</code></pre></section>
+<section><h2>Citation</h2><pre><code>@misc{naveenkumar2026haloblocks,
+  title  = {HaloBlocks: A Registry-Based Library of Composable Attention,
+            Mixture-of-Experts and Transformer Blocks for PyTorch},
+  author = {NaveenKumar, B A},
+  year   = {2026},
+  url    = {https://github.com/basaanithanaveenkumar/HaloBlocks}
+}</code></pre></section>
+</div>
+<footer>HaloBlocks · <a href="https://github.com/basaanithanaveenkumar/HaloBlocks">Source on GitHub</a> · MIT License</footer>
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+const root = document.documentElement;
+const saved = (() => { try { return localStorage.getItem('theme'); } catch (e) { return null; } })();
+if (saved) root.dataset.theme = saved;
+const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark'
+  : matchMedia('(prefers-color-scheme: dark)').matches;
+const sources = [...document.querySelectorAll('.mermaid')].map(el => el.textContent);
+async function render() {
+  mermaid.initialize({ startOnLoad: false, theme: isDark() ? 'dark' : 'neutral', securityLevel: 'strict',
+    flowchart: { curve: 'basis', htmlLabels: true } });
+  const els = document.querySelectorAll('.mermaid');
+  els.forEach((el, i) => { el.removeAttribute('data-processed'); el.textContent = sources[i]; });
+  await mermaid.run({ nodes: els });
+}
+document.getElementById('theme').addEventListener('click', () => {
+  root.dataset.theme = isDark() ? 'light' : 'dark';
+  try { localStorage.setItem('theme', root.dataset.theme); } catch (e) {}
+  render();
+});
+render();
+</script>
+</body>
+</html>

@@ -264,6 +264,19 @@ HaloBlocks/
 
 ---
 
+## Documentation, paper and project page
+
+| | |
+|---|---|
+| Block reference | [`docs/blocks.md`](docs/blocks.md) — every registered block with its constructor signature |
+| Architecture diagrams | [`docs/architecture.md`](docs/architecture.md) (Mermaid) |
+| Paper (arXiv source) | [`paper/main.tex`](paper/main.tex) — build with `make -C paper` |
+| Project page | [basaanithanaveenkumar.github.io/HaloBlocks](https://basaanithanaveenkumar.github.io/HaloBlocks/) ([source](project-page/index.html)) |
+| Blog | [Twenty-four attentions, one interface](docs/blog/2026-09-28-twenty-four-attentions.md) |
+| Claude Code skills | [`.claude/skills/`](.claude/skills) — `haloblocks-dev`, `haloblocks-add-block`, `haloblocks-compose`, `hale-publish` |
+
+---
+
 ## Contributing
 
 Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) before opening a pull request. When adding a new block:
